@@ -204,6 +204,13 @@ class SymbolicTileAnalysis {
         emitter_specific_constraints_(std::move(emitter_specific_constraints)),
         context_(context) {}
 
+  absl::StatusOr<TiledHloComputation> ComputeTiledHloInstructionsImpl(
+      absl::Span<const int64_t> tile_parameters,
+      bool constraints_are_known_satisfied,
+      bool compute_all_tile_offset_indexing_maps,
+      const std::optional<absl::Span<const Interval>>&
+          parent_output_tile_dim_bounds) const;
+
   // Computes indexing information for the roots of the computation.
   static absl::StatusOr<RootIndexing> GetRootIndexing(
       const HloFusionAdaptor& fusion, mlir::MLIRContext* ctx);
