@@ -30,6 +30,7 @@ limitations under the License.
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -49,6 +50,10 @@ limitations under the License.
 #include "xla/tsl/protobuf/coordination_config.pb.h"
 #include "xla/tsl/protobuf/coordination_service.pb.h"
 #include "xla/tsl/util/device_name_utils.h"
+
+ABSL_FLAG(bool, leave_barriers_on_recoverable__agent_restart, false,
+          "If true, allow the recoverable agent to leave ongoing barriers on "
+          "restart.");
 
 namespace tsl {
 namespace {
@@ -1528,10 +1533,23 @@ void CoordinationService::LeaveOngoingBarriers(const CoordinatedTask& task,
     for (const auto& barrier_id : task_state->GetOngoingBarriers()) {
       BarrierState* barrier = &barriers_[barrier_id];
       // Unregister task from barrier.
-      if (barrier->tasks_at_barrier[task]) {
-        barrier->tasks_at_barrier[task] = false;
-        ++barrier->num_pending_tasks;
+      if (absl::GetFlag(FLAGS_leave_barriers_on_recoverable__agent_restart)) {
+        if (barrier->tasks_at_barrier.contains(task)) {
+          // Remove task from barrier.
+          if (!barrier->tasks_at_barrier[task]) {
+            --barrier->num_pending_tasks;
+          }
+          barrier->tasks_at_barrier.erase(task);
+          LOG(INFO) << "Removed the recoverable task " << task_name
+                    << " from the barrier: " << barrier->id;
+        }
+      } else {
+        if (barrier->tasks_at_barrier[task]) {
+          barrier->tasks_at_barrier[task] = false;
+          ++barrier->num_pending_tasks;
+        }
       }
+
       // Cancel any pending callbacks.
       auto it = barrier->done_callbacks.find(task);
       if (it != barrier->done_callbacks.end()) {
