@@ -656,9 +656,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementAfterPrefetch) {
   EXPECT_THAT(concat->operand(1), op::AsyncDone(op::AsyncStart(p0)));
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementAfterPrefetch) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementAfterPrefetch) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 
@@ -738,9 +736,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementIgnoredTrivials) {
               op::Bitcast(op::AsyncDone(op::AsyncStart(p0))));
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementIgnoredTrivials) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementIgnoredTrivials) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 
@@ -829,9 +825,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementAfterEviction) {
                   kDefaultMemorySpace, kAlternateMemorySpace, negate_p0))));
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementAfterEviction) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementAfterEviction) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 
@@ -920,9 +914,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementTwoSlices) {
   EXPECT_THAT(add->operand(1), op::AsyncDone(op::AsyncStart(p0)));
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementTwoSlices) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementTwoSlices) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 
@@ -1009,9 +1001,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementNestedSlices) {
   EXPECT_THAT(concat->operand(1), op::Slice(op::AsyncDone(op::AsyncStart(p0))));
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementNestedSlices) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementNestedSlices) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 
@@ -1100,9 +1090,7 @@ TEST_F(MemorySpaceAssignmentTest, SyncSliceReplacementOneFails) {
   ASSERT_NE(slice0, nullptr);
 }
 
-// TODO(b/415757985): Enable after addressing the bug.
-TEST_F(MemorySpaceAssignmentTest,
-       DISABLED_SyncDynamicSliceReplacementOneFails) {
+TEST_F(MemorySpaceAssignmentTest, SyncDynamicSliceReplacementOneFails) {
   absl::string_view hlo_string = R"(
   HloModule module, is_scheduled=true
 

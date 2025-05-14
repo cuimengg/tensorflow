@@ -1447,9 +1447,8 @@ bool IsTrivialInstruction(const HloInstruction* instruction) {
 }
 
 bool IsSliceLikeInstruction(const HloInstruction* instruction) {
-  return instruction->opcode() == HloOpcode::kSlice;
-  // TODO(b/415757985): Re-enable kDynamicSlice once we take account the other
-  // operands.
+  return instruction->opcode() == HloOpcode::kSlice ||
+         instruction->opcode() == HloOpcode::kDynamicSlice;
 }
 
 }  // namespace
@@ -3041,6 +3040,7 @@ AllocationRequest MsaAlgorithm::CreateAllocationRequest(
   int64_t required_copy_allocation_latest_time = 0;
   HloInstruction* required_copy_allocation_for = nullptr;
   bool required_copy_for_slice = false;
+  std::optional<int64_t> earliest_prefetch_time = std::nullopt;
   if (use.sync_mem_op_operand &&
       IsInstructionPendingReplacements(use.sync_mem_op_operand)) {
     required_copy_allocation_for = use.sync_mem_op_operand;
@@ -3086,7 +3086,30 @@ AllocationRequest MsaAlgorithm::CreateAllocationRequest(
         required_copy_allocation_latest_time = successor_time;
       }
     }
+
+    for (const HloInstruction* operand :
+         required_copy_allocation_for->operands()) {
+      int64_t operand_time = instruction_schedule.at(operand);
+      earliest_prefetch_time =
+          std::max(earliest_prefetch_time.value_or(-1), operand_time);
+    }
+
+    if (required_copy_allocation_for->name() == "dynamic-slice.17721") {
+      std::cout << "required_copy_allocation_for: "
+                << required_copy_allocation_for->ToString() << std::endl;
+      std::cout << "instr time: "
+                << instruction_schedule.at(required_copy_allocation_for)
+                << std::endl;
+      for (const HloInstruction* operand :
+           required_copy_allocation_for->operands()) {
+        int64_t operand_time = instruction_schedule.at(operand);
+        std::cout << "operand time: " << operand_time << std::endl;
+        std::cout << "earliest_prefetch_time: "
+                  << earliest_prefetch_time.value_or(-1) << std::endl;
+      }
+    }
   }
+
   int64_t use_time = instruction_schedule.at(hlo_use.instruction);
   bool allow_no_copy_alternate_mem_allocation = true;
   bool allow_prefetch = true;
@@ -3095,7 +3118,6 @@ AllocationRequest MsaAlgorithm::CreateAllocationRequest(
   // like `latest_prefetch_time` and `earliest_prefetch_time` indicate
   // whether they are exclusive or inclusive boundaries.
   int64_t latest_prefetch_time = use_time;
-  std::optional<int64_t> earliest_prefetch_time = std::nullopt;
 
   // Control flow  calls include kWhile, kCall, and kConditional opcodes.
   bool is_sequential_call =
